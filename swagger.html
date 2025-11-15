@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Swagger - Caballeros del Zodiaco</title>
+  <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist/swagger-ui.css" />
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: #0b1220;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: #e5e7eb;
+    }
+    .topbar {
+      display: none; /* ocultar barra azul por defecto */
+    }
+    #swagger-ui {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #020617;
+      min-height: 100vh;
+    }
+    .title-bar {
+      color: #e5e7eb;
+      margin-bottom: 10px;
+    }
+    .title-bar h1 {
+      margin: 0;
+      font-size: 1.6rem;
+    }
+    .title-bar p {
+      margin: 4px 0 0;
+      font-size: 0.9rem;
+      color: #9ca3af;
+    }
+    .endpoints-info {
+      margin: 10px 0 20px;
+      padding: 10px;
+      background: #020617;
+      border-radius: 8px;
+      border: 1px solid #1f2937;
+      font-size: 0.85rem;
+      color: #d1d5db;
+    }
+    .endpoints-info code {
+      background: #111827;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      color: #e5e7eb;
+    }
+  </style>
+</head>
+<body>
+  <div id="swagger-ui"></div>
+
+  <script src="https://unpkg.com/swagger-ui-dist/swagger-ui-bundle.js"></script>
+  <script>
+    // OpenAPI 3.0 con servidores diferentes por operación
+    const spec = {
+      openapi: "3.0.3",
+      info: {
+        title: "API Caballeros del Zodiaco - Microservicios Python",
+        version: "1.0.0",
+        description: "Documentación unificada para los microservicios de consulta, inserción, edición y eliminación de caballeros.\n\nCada operación usa su propio microservicio (server) en Render."
+      },
+      // Server por defecto (se puede ignorar, las operaciones tienen servers propios)
+      servers: [
+        {
+          url: "https://caballerospyconsulta.onrender.com",
+          description: "Servidor por defecto (consulta)"
+        }
+      ],
+      tags: [
+        { name: "Consulta", description: "Obtención de la lista de caballeros" },
+        { name: "Inserción", description: "Creación de nuevos caballeros" },
+        { name: "Edición", description: "Actualización de caballeros existentes" },
+        { name: "Eliminación", description: "Eliminación de caballeros por ID" }
+      ],
+      paths: {
+        "/caballeros": {
+          get: {
+            tags: ["Consulta"],
+            summary: "Listar todos los caballeros",
+            description: "Obtiene la lista completa de caballeros registrados.",
+            servers: [
+              {
+                url: "https://caballerospyconsulta.onrender.com",
+                description: "Microservicio de consulta"
+              }
+            ],
+            responses: {
+              "200": {
+                description: "Lista de caballeros obtenida correctamente",
+                content: {
+                  "application/json": {
+                    schema: {
+                      type: "array",
+                      items: { $ref: "#/components/schemas/Caballero" }
+                    },
+                    examples: {
+                      ejemplo: {
+                        summary: "Ejemplo de respuesta",
+                        value: [
+                          {
+                            id: "6618243099c7eb9c908d63e1",
+                            nombre: "Seiya de Pegaso",
+                            constelacion: "Pegaso",
+                            edad: 13,
+                            urlImagen: "https://ejemplo.com/seiya.jpg",
+                            altura: 1.65
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              },
+              "500": {
+                description: "Error interno en el servidor",
+                content: {
+                  "application/json": {
+                    schema: { $ref: "#/components/schemas/ErrorResponse" }
+                  }
+                }
+              }
+            }
+          },
+          post: {
+            tags: ["Inserción"],
+            summary: "Insertar un nuevo caballero",
+            description: "Crea un nuevo caballero en la base de datos.",
+            servers: [
+              {
+                url: "https://caballerospyinsercion.onrender.com",
+                description: "Microservicio de inserción"
+              }
+            ],
+            requestBody: {
+              required: true,
+              content: {
+                "application/json": {
+                  schema: { $ref: "#/components/schemas/CaballeroInput" },
+                  examples: {
+                    ejemplo: {
+                      summary: "Ejemplo de inserción",
+                      value: {
+                        nombre: "Shiryu de Dragón",
+                        constelacion: "Dragón",
+                        edad: 14,
+                        urlImagen: "https://ejemplo.com/shiryu.jpg",
+                        altura: 1.72
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            responses: {
+              "200": {
+                description: "Caballero insertado correctamente",
+                content: {
+                  "application/json": {
+                    schema: {
+                      type: "object",
+                      properties: {
+                        ok: { type: "boolean", example: true },
+                        mensaje: {
+                          type: "string",
+                          example: "Caballero insertado correctamente"
+                        },
+                        id: {
+                          type: "string",
+                          example: "6618243099c7eb9c908d63e1"
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "400": {
+                description: "Datos inválidos en el cuerpo de la solicitud",
+                content: {
+                  "application/json": {
+                    schema: { $ref: "#/components/schemas/ErrorResponse" }
+                  }
+                }
+              },
+              "500": {
+                description: "Error interno en el servidor",
+                content: {
+                  "application/json": {
+                    schema: { $ref: "#/components/schemas/ErrorResponse" }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "/caballeros/{id}": {
+          put: {
+            tags: ["Edición"],
+            summary: "Editar un caballero existente",
+            description: "Actualiza los datos de un caballero identificado por su ID.",
+            servers: [
+              {
+                url: "https://caballerospyeditar.onrender.com",
+                description: "Microservicio de edición"
+              }
+            ],
+            parameters: [
+              {
+                name: "id",
+                in: "path",
+                required: true,
+                description: "ID del caballero (ObjectId de Mongo en cadena)",
+                schema: { type: "string", example: "6618243099c7eb9c908d63e1" }
+              }
+            ],
+            requestBody: {
+              required: true,
+              content: {
+                "application/json": {
+                  schema: { $ref: "#/components/schemas/CaballeroUpdate" },
+                  examples: {
+                    ejemplo: {
+                      summary: "Ejemplo de actualización parcial",
+                      value: {
+                        nombre: "Seiya de Pegaso",
+                        altura: 1.68
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            responses: {
+              "200": {
+                description: "Caballero actualizado correctamente",
+                content: {
+                  "application/json": {
+                    schema: {
+                      type: "object",
+                      properties: {
+                        ok: { type: "boolean", example: true },
+                        mensaje: {
+                          type: "string",
+                          example: "Caballero actualizado correctamente"
+                        },
+                        cambios: {
+                          type: "object",
+                          additionalProperties: true,
+                          example: {
+                            nombre: "Seiya de Pegaso",
+                            altura: 1.68
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "400": {
+                description: "ID inválido o datos vacíos",
+                content: {
+                  "application/json": {
+                    schema: { $ref: "#/components/schemas/ErrorResponse" }
+                  }
+                }
+              },
+              "404": {
+                description: "Caballero no encontrado",
+                content: {
+                  "application/json": {
+                    schema: { $ref: "#/components/schemas/ErrorResponse" }
+                  }
+                }
+              },
+              "500": {
+                description: "Error interno en el servidor",
+                content: {
+                  "application/json": {
+                    schema: { $ref: "#/components/schemas/ErrorResponse" }
+                  }
+                }
+              }
+            }
+          },
+          delete: {
+            tags: ["Eliminación"],
+            summary: "Eliminar un caballero por ID",
+            description: "Elimina un caballero de la base de datos usando su ID.",
+            servers: [
+              {
+                url: "https://caballerospyeliminacion.onrender.com",
+                description: "Microservicio de eliminación"
+              }
+            ],
+            parameters: [
+              {
+                name: "id",
+                in: "path",
+                required: true,
+                description: "ID del caballero (ObjectId de Mongo en cadena)",
+                schema: { type: "string", example: "6618243099c7eb9c908d63e1" }
+              }
+            ],
+            responses: {
+              "200": {
+                description: "Caballero eliminado correctamente",
+                content: {
+                  "application/json": {
+                    schema: { $ref: "#/components/schemas/DeleteResponse" }
+                  }
+                }
+              },
+              "400": {
+                description: "ID inválido",
+                content: {
+                  "application/json": {
+                    schema: { $ref: "#/components/schemas/ErrorResponse" }
+                  }
+                }
+              },
+              "404": {
+                description: "Caballero no encontrado",
+                content: {
+                  "application/json": {
+                    schema: { $ref: "#/components/schemas/ErrorResponse" }
+                  }
+                }
+              },
+              "500": {
+                description: "Error interno en el servidor",
+                content: {
+                  "application/json": {
+                    schema: { $ref: "#/components/schemas/ErrorResponse" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      components: {
+        schemas: {
+          Caballero: {
+            type: "object",
+            properties: {
+              id: {
+                type: "string",
+                description: "ID del caballero (mapeo de _id de MongoDB)",
+                example: "6618243099c7eb9c908d63e1"
+              },
+              nombre: { type: "string", example: "Seiya de Pegaso" },
+              constelacion: { type: "string", example: "Pegaso" },
+              edad: { type: "integer", example: 13 },
+              urlImagen: {
+                type: "string",
+                format: "uri",
+                example: "https://ejemplo.com/seiya.jpg"
+              },
+              altura: { type: "number", format: "float", example: 1.65 }
+            },
+            required: ["id", "nombre", "constelacion", "edad", "urlImagen", "altura"]
+          },
+          CaballeroInput: {
+            type: "object",
+            properties: {
+              nombre: { type: "string", example: "Seiya de Pegaso" },
+              constelacion: { type: "string", example: "Pegaso" },
+              edad: { type: "integer", example: 13 },
+              urlImagen: {
+                type: "string",
+                format: "uri",
+                example: "https://ejemplo.com/seiya.jpg"
+              },
+              altura: { type: "number", format: "float", example: 1.65 }
+            },
+            required: ["nombre", "constelacion", "edad", "urlImagen", "altura"]
+          },
+          CaballeroUpdate: {
+            type: "object",
+            description: "Campos para actualización parcial. Todos son opcionales.",
+            properties: {
+              nombre: { type: "string", nullable: true },
+              constelacion: { type: "string", nullable: true },
+              edad: { type: "integer", nullable: true },
+              urlImagen: { type: "string", format: "uri", nullable: true },
+              altura: { type: "number", format: "float", nullable: true }
+            }
+          },
+          DeleteResponse: {
+            type: "object",
+            properties: {
+              ok: { type: "boolean", example: true },
+              mensaje: {
+                type: "string",
+                example: "Caballero eliminado correctamente"
+              }
+            }
+          },
+          ErrorResponse: {
+            type: "object",
+            properties: {
+              detail: {
+                type: "string",
+                example: "Caballero no encontrado"
+              }
+            }
+          }
+        }
+      }
+    };
+
+    window.onload = function () {
+      const ui = SwaggerUIBundle({
+        spec: spec,
+        dom_id: "#swagger-ui",
+        deepLinking: true
+      });
+
+      // Agregar cabecera custom con explicación de endpoints
+      const container = document.getElementById("swagger-ui");
+      const header = document.createElement("div");
+      header.className = "title-bar";
+      header.innerHTML = `
+        <h1>Caballeros del Zodiaco - Microservicios Python</h1>
+        <p>Prueba directamente los endpoints de Consulta, Inserción, Edición y Eliminación.</p>
+        <div class="endpoints-info">
+          <div><strong>Consulta</strong> → <code>https://caballerospyconsulta.onrender.com/caballeros</code> (GET)</div>
+          <div><strong>Inserción</strong> → <code>https://caballerospyinsercion.onrender.com/caballeros</code> (POST)</div>
+          <div><strong>Edición</strong> → <code>https://caballerospyeditar.onrender.com/caballeros/{id}</code> (PUT)</div>
+          <div><strong>Eliminación</strong> → <code>https://caballerospyeliminacion.onrender.com/caballeros/{id}</code> (DELETE)</div>
+        </div>
+      `;
+      container.prepend(header);
+    };
+  </script>
+</body>
+</html>
